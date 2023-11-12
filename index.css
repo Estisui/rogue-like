@@ -2,37 +2,8 @@
   box-sizing: border-box;
 }
 
-.field .tileE {
-  background-image: url(images/tile-E.png);
-  z-index: 10;
-}
-
-.field .tileP {
-  background-image: url(images/tile-P.png);
-  z-index: 10;
-}
-
-.field .tileHP {
-  background-image: url(images/tile-HP.png);
-  z-index: 9;
-}
-
-.field .tileSW {
-  background-image: url(images/tile-SW.png);
-  z-index: 9;
-}
-
 .field .tile .health {
   background-color: #ff0000;
-  z-index: 11;
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  height: 3px;
-}
-
-.field .tileP .health {
-  background-color: #00ff00;
   z-index: 11;
   position: absolute;
   left: 0px;
@@ -72,33 +43,79 @@ body {
 }
 
 h1 {
-    font-family: "Playfair Display";
-    font-size: 30px;
-    padding: 10px 0px;
-    margin: 0px;
-    text-align: center;
+  font-family: "Playfair Display";
+  font-size: 30px;
+  padding: 10px 0px;
+  margin: 0px;
+  text-align: center;
 }
 
 .field-box {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .field {
-    border: 2px solid #d0d0d0;
-    width: 80%;
-    height: 80%;
-    display: grid;
+  border: 2px solid #d0d0d0;
+  width: 80%;
+  height: 80%;
+  display: grid;
 }
 
 .field .tile {
-    background-size: 100%;
-    background-image: url(images/tile-.png);
-    /*z-index: 5;*/
+  background-size: cover;
+  background-image: url(images/tile-.png);
+  /*z-index: 5;*/
 }
 
 .field .tileW {
-    background-image: url(images/tile-W.png);
+  background-image: url(images/tile-W.png);
+}
+
+.field .tileSW {
+  background-image: url(images/tile-SW.png);
+}
+
+.field .tileHP {
+  background-image: url(images/tile-HP.png);
+}
+
+.field .tileE {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: url(images/tile-E.png);
+  transition: 0.5s linear;
+}
+
+.field .tileP {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: url(images/tile-P.png);
+  transition: 0.5s linear;
+}
+
+/* transitions */
+
+.transition-left {
+  translate: -100%;
+}
+
+.transition-right {
+  translate: 100%;
+}
+
+.transition-up {
+  translate: 0 -100%;
+}
+
+.transition-down {
+  translate: 0 100%;
 }
