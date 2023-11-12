@@ -8,6 +8,8 @@ const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (maxFloor - minCeil) + minCeil);
 };
 
+const getRandomItem = (list) => list.splice(Math.floor(Math.random() * list.length), 1)[0];
+
 class Game {
   constructor(columns, rows, location) {
     this.map = {
@@ -27,10 +29,22 @@ class Game {
   generateAisles() {
     const verticalNum = getRandomInt(3, 6);
     const horizontalNum = getRandomInt(3, 6);
+    const verticalIndexes = [...Array(this.map.columns).keys()];
+    const horizontalIndexes = [...Array(this.map.rows).keys()];
+
+    // generate vertical aisles
     for (let i = 0; i < verticalNum; i += 1) {
-      const column = getRandomInt(0, this.map.columns);
+      const column = getRandomItem(verticalIndexes);
       for (let y = 0; y < this.map.rows; y += 1) {
         this.map.field[y][column] = 'path';
+      }
+    }
+
+    // generate horizontal aisles
+    for (let j = 0; j < horizontalNum; j += 1) {
+      const row = getRandomItem(horizontalIndexes);
+      for (let x = 0; x < this.map.columns; x += 1) {
+        this.map.field[row][x] = 'path';
       }
     }
   }
