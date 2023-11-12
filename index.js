@@ -1,67 +1,57 @@
-const columns = 40;
-const rows = 24;
+const width = 40;
+const height = 24;
+const field = document.getElementById('field');
+
+const getRandomInt = (min, max) => {
+  const minCeil = Math.ceil(min);
+  const maxFloor = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloor - minCeil) + minCeil);
+};
 
 class Game {
-  constructor() {
-    this.map = [];
+  constructor(columns, rows, location) {
+    this.map = {
+      columns,
+      rows,
+      field: [],
+    };
+    this.location = location;
+  }
+
+  generateMap() {
+    this.map.field = Array(this.map.rows)
+      .fill(null)
+      .map(() => Array(this.map.columns).fill('wall'));
+  }
+
+  generateAisles() {
+    const verticalNum = getRandomInt(3, 6);
+    const horizontalNum = getRandomInt(3, 6);
+    for (let i = 0; i < verticalNum; i += 1) {
+      const column = getRandomInt(0, this.map.columns);
+      for (let y = 0; y < this.map.rows; y += 1) {
+        this.map.field[y][column] = 'path';
+      }
+    }
+  }
+
+  drawMap() {
+    this.location.style.gridTemplateColumns = `repeat(${this.map.columns}, 1fr)`;
+    this.location.style.gridTemplateRows = `repeat(${this.map.rows}, 1fr)`;
+    this.map.field.forEach((row) => {
+      row.forEach((tile) => {
+        const block = document.createElement('div');
+        block.classList.add('tile');
+        if (tile !== 'path') {
+          block.classList.add('tileW');
+        }
+        this.location.appendChild(block);
+      });
+    });
   }
 }
 
-let field = document.getElementById("field");
-
-const generateMap = (columns, rows) => {
-	const map = {
-		columns,
-		rows,
-		field
-	}
-  map.field = Array(rows)
-    .fill(null)
-    .map(() => Array(columns).fill("wall"));
-	return map;
-};
-
-const generateAisles = (map) => {
-	const getRandomInt = (min, max) => {
-		min = Math.ceil(min);
-		max = Math.floor(max);
-		return Math.floor(Math.random() * (max - min) + min);
-	}
-
-	const verticalNum = getRandomInt(3, 6);
-	const horizontalNum = getRandomInt(3, 6);
-	console.log(verticalNum, horizontalNum);
-
-	for (let i = 0; i < verticalNum; i++) {
-		const column = getRandomInt(0, map.columns);
-		for (let y = 0; y < map.rows; y++) {
-			console.log(column, y);
-			map.field[y][column] = 'path';
-		}
-	}
-}
-
-const drawMap = (map, location) => {
-	location.style.gridTemplateColumns = `repeat(${map.columns}, 1fr)`
-	location.style.gridTemplateRows = `repeat(${map.rows}, 1fr)`
-	map.field.forEach((row) => {
-		row.forEach((tile) => {
-			const block = document.createElement('div');
-			block.classList.add('tile');
-			if (tile !== 'path') {
-				block.classList.add("tileW");
-			}
-			location.appendChild(block);
-		})
-	});
-}
-
-const game = new Game();
-game.map = generateMap(columns, rows);
-console.log(game.map, field);
-generateAisles(game.map);
-drawMap(game.map, field);
-
-
-// const game = new Game();
-// game.init();
+const game = new Game(width, height, field);
+game.generateMap();
+game.generateAisles();
+game.drawMap();
