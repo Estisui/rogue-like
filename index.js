@@ -11,26 +11,29 @@ const getRandomInt = (min, max) => {
 const getRandomItem = (list) => list.splice(Math.floor(Math.random() * list.length), 1)[0];
 
 class Game {
-  constructor(rows, columns, location) {
+  constructor(rows, columns, element) {
     this.map = {
       rows,
       columns,
       field: null,
     };
-    this.location = location;
+    this.element = element;
     this.player = {
       coords: { y: null, x: null },
-      location: null,
+      element: null,
+      strength: 25,
+      hp: 100,
     };
+    this.enemies = {};
   }
 
   generateMap() {
     this.map.field = Array(this.map.rows)
       .fill(null)
-      .map(() => Array(this.map.columns).fill().map(() => ({
+      .map((_, y) => Array(this.map.columns).fill().map((__, x) => ({
         value: 'wall',
         element: null,
-        location: null,
+        coords: { y, x },
       })));
   }
 
@@ -135,6 +138,20 @@ class Game {
     return emptyTiles;
   }
 
+  getAdjTiles(location) {
+    const verticalSafe = ({ y }) => y < this.map.rows && y >= 0;
+    const horizontalSafe = ({ x }) => x < this.map.columns && x >= 0;
+    const { y, x } = location;
+    const adjTiles = [];
+    const tiles = [{ y: y + 1, x }, { y: y - 1, x }, { y, x: x - 1 }, { y, x: x + 1 }];
+    tiles.forEach((tile) => {
+      if (verticalSafe(tile) && horizontalSafe(tile)) {
+        adjTiles.push(this.map.field[tile.y][tile.x]);
+      }
+    });
+    return adjTiles;
+  }
+
   generateItems() {
     const emptyTiles = this.getEmptyTiles();
     // swords
@@ -151,6 +168,17 @@ class Game {
     for (let j = 0; j < 10; j += 1) {
       const place = getRandomItem(emptyTiles);
       this.map.field[place.y][place.x].value = 'enemy';
+      const key = `enemy${j}`;
+      this.map.field[place.y][place.x].id = key;
+      const enemy = {
+        hp: 100,
+        coords: {
+          y: place.y,
+          x: place.x,
+        },
+        element: null,
+      };
+      this.enemies[key] = enemy;
     }
     // player
     const place = getRandomItem(emptyTiles);
@@ -165,7 +193,6 @@ class Game {
     const horizontalSafe = x < this.map.columns && x >= 0;
     if (verticalSafe && horizontalSafe) {
       const { value } = this.map.field[y][x];
-      console.log(value);
       return value !== 'player' && value !== 'enemy' && value !== 'wall';
     }
     return false;
@@ -181,8 +208,8 @@ class Game {
     return possibleMoves;
   }
 
-  movePlayer(direction) {
-    const { y, x } = this.player.coords;
+  static getTargetCoords(coords, direction) {
+    const { y, x } = coords;
     const targetCoords = { y: null, x: null };
     switch (direction) {
       case 'up':
@@ -204,23 +231,98 @@ class Game {
       default:
         break;
     }
+    return targetCoords;
+  }
+
+  movePlayer(direction) {
+    const { coords } = this.player;
+    const { y, x } = coords;
+    const targetCoords = Game.getTargetCoords(coords, direction);
     if (this.movePossible(targetCoords)) {
       const current = this.map.field[y][x];
       const target = this.map.field[targetCoords.y][targetCoords.x];
       current.value = 'tile';
       this.player.coords = targetCoords;
       target.value = 'player';
-      Game.renderMove(this.player.location, target.location, direction);
+      Game.renderMove(this.player.element, target.element, direction);
       return true;
     }
     return false;
   }
 
+  moveEnemy(enemy, direction) {
+    const { coords } = enemy;
+    const { y, x } = coords;
+    const targetCoords = Game.getTargetCoords(coords, direction);
+    const current = this.map.field[y][x];
+    const target = this.map.field[targetCoords.y][targetCoords.x];
+    current.value = 'tile';
+    enemy.coords = target.coords;
+    target.value = 'enemy';
+    target.id = current.id;
+    delete current.id;
+    Game.renderMove(enemy.element, target.element, direction);
+  }
+
+  attack() {
+    Game.renderAttack(this.player);
+    const availableEnemies = this.getAdjTiles(this.player.coords).filter((tile) => tile.value === 'enemy');
+    availableEnemies.forEach((enemy) => {
+      this.enemies[enemy.id].hp -= this.player.strength;
+      if (this.enemies[enemy.id].hp > 0) {
+        Game.renderHealthBar(this.enemies[enemy.id].element, this.enemies[enemy.id].hp);
+      } else {
+        delete this.enemies[enemy.id];
+        Game.removeEnemyTile(enemy);
+      }
+    });
+  }
+
+  attackPlayer() {
+    this.player.hp -= 25;
+    if (this.player.hp > 0) {
+      Game.renderHealthBar(this.player.element, this.player.hp);
+    } else {
+      Game.renderHealthBar(this.player.element, 0);
+      alert('Игра проиграна');
+    }
+  }
+
+  performMove(enemy) {
+    const tiles = this.getAdjTiles(enemy.coords);
+    if (tiles.filter((tile) => tile.value === 'player').length > 0) {
+      this.attackPlayer();
+      Game.renderAttack(enemy);
+    } else {
+      const availableMoves = this.availableMoves(enemy.coords);
+      const move = getRandomItem(availableMoves);
+      this.moveEnemy(enemy, move);
+    }
+  }
+
+  startEnemies() {
+    const timerId = setInterval(() => {
+      if (Object.values(this.enemies).length > 0 && this.player.hp > 0) {
+        Object.values(this.enemies).forEach((enemy) => {
+          this.performMove(enemy);
+        });
+      } else {
+        clearInterval(timerId);
+      }
+    }, 1000);
+  }
+
+  static removeEnemyTile(tile) {
+    delete tile.id;
+    tile.value = 'tile';
+    this.renderKill(tile);
+  }
+
   // renders
 
   drawMap() {
-    this.location.style.gridTemplateRows = `repeat(${this.map.rows}, 1fr)`;
-    this.location.style.gridTemplateColumns = `repeat(${this.map.columns}, 1fr)`;
+    this.element.style.gridTemplateRows = `repeat(${this.map.rows}, 1fr)`;
+    this.element.style.gridTemplateColumns = `repeat(${this.map.columns}, 1fr)`;
     this.map.field.forEach((row, y) => {
       row.forEach((tile, x) => {
         const block = document.createElement('div');
@@ -238,23 +340,46 @@ class Game {
           case 'enemy': {
             const enemyDiv = document.createElement('div');
             enemyDiv.classList.add('tileE');
+            const healthBar = document.createElement('div');
+            healthBar.classList.add('health');
+            healthBar.style.width = '100%';
+            enemyDiv.appendChild(healthBar);
             block.appendChild(enemyDiv);
+            this.enemies[tile.id].element = enemyDiv;
             break;
           }
           case 'player': {
             const playerDiv = document.createElement('div');
             playerDiv.classList.add('tileP');
+            const healthBar = document.createElement('div');
+            healthBar.classList.add('health');
+            healthBar.style.width = '100%';
+            playerDiv.appendChild(healthBar);
             block.appendChild(playerDiv);
-            this.player.location = playerDiv;
+            this.player.element = playerDiv;
             break;
           }
           default:
             break;
         }
-        this.map.field[y][x].location = block;
-        this.location.appendChild(block);
+        this.map.field[y][x].element = block;
+        this.element.appendChild(block);
       });
     });
+  }
+
+  static renderHealthBar(element, hp) {
+    const healthBar = element.querySelector('.health');
+    healthBar.style.width = `${hp}%`;
+  }
+
+  static renderKill(tile) {
+    tile.element.innerHTML = '';
+  }
+
+  static renderAttack(character) {
+    character.element.classList.add('attack');
+    character.element.addEventListener('transitionend', () => character.element.classList.remove('attack'), { once: true });
   }
 
   static renderMove(curElement, newElement, direction) {
@@ -273,18 +398,23 @@ game.generateAisles();
 game.generateRooms();
 game.generateItems();
 game.drawMap();
+game.startEnemies();
 
-const keyboardHandler = async (e) => {
+const keyboardHandler = (e) => {
   const codes = {
     KeyW: 'up', KeyA: 'left', KeyS: 'down', KeyD: 'right',
   };
   if (e.code === 'KeyW' || e.code === 'KeyA' || e.code === 'KeyS' || e.code === 'KeyD') {
     document.removeEventListener('keydown', keyboardHandler);
     if (game.movePlayer(codes[e.code])) {
-      game.player.location.addEventListener('transitionend', () => document.addEventListener('keydown', keyboardHandler), { once: true });
+      game.player.element.addEventListener('transitionend', () => document.addEventListener('keydown', keyboardHandler), { once: true });
     } else {
       document.addEventListener('keydown', keyboardHandler);
     }
+  }
+  if (e.code === 'Space') {
+    game.attack();
+    game.player.element.addEventListener('transitionend', () => document.addEventListener('keydown', keyboardHandler), { once: true });
   }
 };
 

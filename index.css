@@ -2,31 +2,6 @@
   box-sizing: border-box;
 }
 
-.field .tile .health {
-  background-color: #ff0000;
-  z-index: 11;
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  height: 3px;
-}
-
-.inventory-box {
-  border: 2px solid #d0d0d0;
-  float: left;
-}
-
-.inventory {
-  position: relative;
-  width: 800px;
-  height: 32px;
-}
-
-.cl {
-  clear: both;
-  display: block;
-}
-
 /*My styles*/
 
 html,
@@ -89,7 +64,7 @@ h1 {
   background-size: contain;
   background-repeat: no-repeat;
   background-image: url(images/tile-E.png);
-  transition: 0.5s linear;
+  transition: 0.8s linear;
 }
 
 .field .tileP {
@@ -99,7 +74,23 @@ h1 {
   background-size: contain;
   background-repeat: no-repeat;
   background-image: url(images/tile-P.png);
-  transition: 0.5s linear;
+  transition: 0.2s linear;
+}
+
+.field .tileE .health {
+  background-color: #ff0000;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  height: 3px;
+}
+
+.field .tileP .health {
+  background-color: #00ff00;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  height: 3px;
 }
 
 /* transitions */
@@ -118,4 +109,8 @@ h1 {
 
 .transition-down {
   translate: 0 100%;
+}
+
+.attack {
+  scale: 1.2;
 }
