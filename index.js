@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 const height = 24;
 const width = 40;
 const field = document.getElementById('field');
