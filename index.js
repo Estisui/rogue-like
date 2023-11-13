@@ -241,10 +241,21 @@ class Game {
     if (this.movePossible(targetCoords)) {
       const current = this.map.field[y][x];
       const target = this.map.field[targetCoords.y][targetCoords.x];
+      if (target.value === 'sword') {
+        this.player.strength *= 2;
+      } else if (target.value === 'potion') {
+        if (this.player.hp >= 75) {
+          this.player.hp = 100;
+        } else {
+          this.player.hp += 25;
+        }
+        Game.renderHealthBar(this.player.element, this.player.hp);
+      }
       current.value = 'tile';
       this.player.coords = targetCoords;
       target.value = 'player';
       Game.renderMove(this.player.element, target.element, direction);
+      Game.renderEmptyfying(current);
       return true;
     }
     return false;
@@ -262,6 +273,7 @@ class Game {
     target.id = current.id;
     delete current.id;
     Game.renderMove(enemy.element, target.element, direction);
+    Game.renderEmptyfying(current);
   }
 
   attack() {
@@ -269,11 +281,16 @@ class Game {
     const availableEnemies = this.getAdjTiles(this.player.coords).filter((tile) => tile.value === 'enemy');
     availableEnemies.forEach((enemy) => {
       this.enemies[enemy.id].hp -= this.player.strength;
+      const enemyId = enemy.id;
       if (this.enemies[enemy.id].hp > 0) {
         Game.renderHealthBar(this.enemies[enemy.id].element, this.enemies[enemy.id].hp);
       } else {
-        delete this.enemies[enemy.id];
+        Game.renderKill(this.enemies[enemy.id].element);
         Game.removeEnemyTile(enemy);
+        delete this.enemies[enemyId];
+        if (Object.values(this.enemies).length === 0) {
+          alert('Ты победил!');
+        }
       }
     });
   }
@@ -296,7 +313,9 @@ class Game {
     } else {
       const availableMoves = this.availableMoves(enemy.coords);
       const move = getRandomItem(availableMoves);
-      this.moveEnemy(enemy, move);
+      if (move) {
+        this.moveEnemy(enemy, move);
+      }
     }
   }
 
@@ -313,9 +332,8 @@ class Game {
   }
 
   static removeEnemyTile(tile) {
-    delete tile.id;
     tile.value = 'tile';
-    this.renderKill(tile);
+    delete tile.id;
   }
 
   // renders
@@ -374,7 +392,7 @@ class Game {
   }
 
   static renderKill(tile) {
-    tile.element.innerHTML = '';
+    tile.remove();
   }
 
   static renderAttack(character) {
@@ -389,6 +407,10 @@ class Game {
     };
     curElement.classList.add(`transition-${direction}`);
     curElement.addEventListener('transitionend', afterTransition, { once: true });
+  }
+
+  static renderEmptyfying(tile) {
+    tile.element.className = 'tile';
   }
 }
 
